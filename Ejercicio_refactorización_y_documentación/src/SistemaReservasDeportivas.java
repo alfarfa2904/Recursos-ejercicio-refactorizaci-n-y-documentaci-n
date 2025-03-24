@@ -40,7 +40,7 @@ public class SistemaReservasDeportivas {
        
         for (Reserva r : reservas) {
             if (r.getIdPista() == idPista && r.getFecha().equals(fecha)) {
-                return false; // La pista ya está reservada en esa fecha
+                return false; // La pista ya está reservada en esa fechas
             }
         }
         reservas.add(new Reserva(idPista, fecha, duracion));
