@@ -1,117 +1,130 @@
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Clase principal para gestionar un sistema de reservas deportivas.
- * Permite realizar reservas de pistas y gestionar la iluminación.
- * 
- * @author [Jaime Peinado]
  */
-
 public class SistemaReservasDeportivas {
 
     private List<Reserva> reservas;
-    private boolean[] iluminacion;
-    private static final int MAX_PISTAS = 10; // Asumimos un máximo de 10 pistas
+    private GestorIluminacion gestorIluminacion;
+    private static final int MAX_PISTAS = 10;
 
     /**
      * Constructor para inicializar el sistema de reservas deportivas.
      */
-    
     public SistemaReservasDeportivas() {
         reservas = new ArrayList<>();
-        iluminacion = new boolean[MAX_PISTAS];
+        gestorIluminacion = new GestorIluminacion(MAX_PISTAS);
     }
-    
+
     /**
      * Reserva una pista deportiva.
-     * 
-     * @param idPista Identificador de la pista.
-     * @param fecha Fecha de la reserva en formato LocalDate.
-     * @param duracion Duración de la reserva en horas.
-     * @return true si la reserva fue exitosa, false en caso contrario.
      */
+    public boolean reservarPista(Reserva reserva) {
+        if (reserva.getIdPista() < 0 || reserva.getIdPista() >= MAX_PISTAS || reserva.getDuracion() <= 0) {
+            return false; // Datos inválidos
+        }
 
-    public boolean reservarPista(int idPista, String fecha, int duracion) {
-        if (idPista < 0 || idPista >= MAX_PISTAS) {
-            return false; // ID de pista inválido
+        if (!esFechaDisponible(reserva.getIdPista(), reserva.getFecha())) {
+            return false; // Fecha no disponibl
         }
-        
-       
-        for (Reserva r : reservas) {
-            if (r.getIdPista() == idPista && r.getFecha().equals(fecha)) {
-                return false; // La pista ya está reservada en esa fechas
-            }
-        }
-        reservas.add(new Reserva(idPista, fecha, duracion));
+
+        reservas.add(reserva);
         return true;
-       
     }
-    
+
     /**
      * Cancela una reserva específica.
-     * 
-     * @param idReserva Identificador de la reserva.
-     * @return true si la cancelación fue exitosa, false en caso contrario.
      */
-
     public boolean cancelarReserva(int idReserva) {
         for (int i = 0; i < reservas.size(); i++) {
-            if (reservas.get(i).getIdPista() == idReserva) {
+            if (reservas.get(i).getIdReserva() == idReserva) {
                 reservas.remove(i);
                 return true;
             }
         }
         return false; // No se encontró la reserva
     }
-    
-    /**
-     * Activa la iluminación de una pista específica.
-     * 
-     * @param idPista Identificador de la pista.
-     * @return true si la iluminación fue activada, false en caso contrario.
-     */
 
-    public boolean activarIluminacion(int idPista) {
-        if (idPista < 0 || idPista >= MAX_PISTAS) {
+    /**
+     * Verifica la disponibilidad de una pista en una fecha específica.
+     */
+    public boolean verificarDisponibilidad(int idPista, LocalDate fecha) {
+        return esFechaDisponible(idPista, fecha);
+    }
+
+    /**
+     * Método privado para verificar si una fecha está disponible.
+     */
+    private boolean esFechaDisponible(int idPista, LocalDate fecha) {
+        for (Reserva r : reservas) {
+            if (r.getIdPista() == idPista && r.getFecha().equals(fecha)) {
+                return false; // Fecha no disponible
+            }
+        }
+        return true; // Fecha disponible
+    }
+}
+
+/**
+ * Clase para gestionar la iluminación de las pistas.
+ */
+class GestorIluminacion {
+    private boolean[] iluminacion;
+
+    public GestorIluminacion(int maxPistas) {
+        iluminacion = new boolean[maxPistas];
+    }
+
+    public boolean encenderLuces(int idPista) {
+        if (idPista < 0 || idPista >= iluminacion.length) {
             return false; // ID de pista inválido
         }
         iluminacion[idPista] = true;
         return true;
     }
-    
-    /**
-     * Desactiva la iluminación de una pista específica.
-     * 
-     * @param idPista Identificador de la pista.
-     * @return true si la iluminación fue desactivada, false en caso contrario.
-     */
 
-    public boolean desactivarIluminacion(int idPista) {
-        if (idPista < 0 || idPista >= MAX_PISTAS) {
+    public boolean apagarLuces(int idPista) {
+        if (idPista < 0 || idPista >= iluminacion.length) {
             return false; // ID de pista inválido
         }
         iluminacion[idPista] = false;
         return true;
     }
-    
-    /**
-     * Verifica la disponibilidad de una pista en una fecha específica.
-     * 
-     * @param idPista Identificador de la pista.
-     * @param fecha Fecha de la reserva en formato LocalDate.
-     * @return true si la pista está disponible, false en caso contrario.
-     */
+}
 
-    public boolean verificarDisponibilidad(int idPista, String fecha, String hora) {
-        if (idPista < 0 || idPista >= MAX_PISTAS) {
-            return false; // ID de pista inválido
-        }
-        for (Reserva r : reservas) {
-            if (r.getIdPista() == idPista && r.getFecha().equals(fecha)) {
-                return false; // La pista no está disponible en esa fecha
-            }
-        }
-        return true; // La pista está disponible
+/**
+ * Clase para representar una reserva.
+ */
+class Reserva {
+    private static int contadorReservas = 0;
+    private int idReserva;
+    private int idPista;
+    private LocalDate fecha;
+    private int duracion;
+
+    public Reserva(int idPista, LocalDate fecha, int duracion) {
+        this.idReserva = ++contadorReservas;
+        this.idPista = idPista;
+        this.fecha = fecha;
+        this.duracion = duracion;
+    }
+
+    public int getIdReserva() {
+        return idReserva;
+    }
+
+    public int getIdPista() {
+        return idPista;
+    }
+
+    public LocalDate getFecha() {
+        return fecha;
+    }
+
+    public int getDuracion() {
+        return duracion;
     }
 }
